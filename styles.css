@@ -1,2 +1,2 @@
 
-.custom-card{grid-column:1/-1;background:#fff;padding:16px;border-radius:18px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}.custom-card input{margin:0}.color-wheel{width:34px;height:34px;padding:0;border:0;border-radius:50%;cursor:pointer}.tools{align-items:center}.tool[data-tool="fill"]{background:#fff}.tool[data-tool="fill"].active{background:var(--purple);color:#fff}
+.custom-card-trigger{cursor:pointer}.custom-card-trigger strong{font-size:.9rem;color:var(--purple)}.custom-entry{grid-column:1/-1;background:#fff;padding:16px;border-radius:18px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}.custom-entry[hidden]{display:none}.custom-entry input{margin:0;flex:1}

@@ -6,8 +6,67 @@ $('startButton').onclick=()=>{state.artist=$('artistName').value.trim()||'الر
 function chooseCard(i){state.chosen=state.options[i];$('timer').textContent=format(state.duration);show('drawScreen');requestAnimationFrame(()=>{setupCanvas($('drawingCanvas'));startTimer()})}
 function format(s){return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`}
 function startTimer(){clearInterval(state.timer);state.time=state.duration;state.timer=setInterval(()=>{state.time--; $('timer').textContent=format(state.time);$('timer').classList.toggle('warning',state.time<=10);if(state.time<=0){clearInterval(state.timer);finishDrawing()}},1000)}
-const ctxs=new WeakMap();function setupCanvas(canvas){const ratio=Math.max(1,window.devicePixelRatio||1);const rect=canvas.getBoundingClientRect();const cssWidth=Math.max(1,rect.width||canvas.parentElement.clientWidth||600);const cssHeight=Math.max(350,Math.min(600,window.innerHeight*.58));canvas.width=Math.round(cssWidth*ratio);canvas.height=Math.round(cssHeight*ratio);canvas.style.width='100%';canvas.style.height=cssHeight+'px';canvas.style.cursor='crosshair';canvas.style.touchAction='none';const c=canvas.getContext('2d');c.setTransform(1,0,0,1,0,0);c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.lineCap='round';c.lineJoin='round';ctxs.set(canvas,{c,down:false,color:'#292d3e',tool:'pen',history:[]});canvas.onpointerdown=e=>{e.preventDefault();canvas.setPointerCapture?.(e.pointerId);const q=ctxs.get(canvas);const p=point(canvas,e);q.down=true;q.history.push(canvas.toDataURL());q.c.beginPath();q.c.moveTo(p.x*ratio,p.y*ratio)};canvas.onpointermove=e=>{e.preventDefault();const q=ctxs.get(canvas);if(!q||!q.down)return;const p=point(canvas,e);q.c.lineWidth=q.tool==='eraser'?28:5;q.c.strokeStyle=q.tool==='eraser'?'#fff':q.color;q.c.lineTo(p.x*ratio,p.y*ratio);q.c.stroke();};canvas.onpointerup=canvas.onpointercancel=canvas.onpointerleave=e=>{const q=ctxs.get(canvas);if(q)q.down=false}};
-function point(canvas,e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left),y:(e.clientY-r.top)}}
+const ctxs=new WeakMap();
+function setupCanvas(canvas){
+  const rect = canvas.getBoundingClientRect();
+  const cssWidth = rect.width || 800;
+  const cssHeight = rect.height || 420;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(cssWidth * dpr);
+  canvas.height = Math.round(cssHeight * dpr);
+  canvas.style.width = '100%';
+  canvas.style.height = cssHeight + 'px';
+  canvas.style.cursor = 'crosshair';
+  canvas.style.touchAction = 'none';
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+  const stateCanvas = {ctx, down:false, color:'#292d3e', tool:'pen', history:[], lastPoint:null};
+  ctxs.set(canvas, stateCanvas);
+
+  const getPoint = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+
+  canvas.onpointerdown = (e) => {
+    e.preventDefault();
+    canvas.setPointerCapture?.(e.pointerId);
+    const q = ctxs.get(canvas);
+    q.down = true;
+    q.lastPoint = getPoint(e);
+    q.history.push(canvas.toDataURL());
+    q.ctx.beginPath();
+    q.ctx.moveTo(q.lastPoint.x, q.lastPoint.y);
+    q.ctx.strokeStyle = q.tool === 'eraser' ? '#fff' : q.color;
+    q.ctx.lineWidth = q.tool === 'eraser' ? 28 : 5;
+  };
+
+  canvas.onpointermove = (e) => {
+    if (!ctxs.get(canvas).down) return;
+    const q = ctxs.get(canvas);
+    const p = getPoint(e);
+    q.ctx.beginPath();
+    q.ctx.moveTo(q.lastPoint.x, q.lastPoint.y);
+    q.ctx.lineTo(p.x, p.y);
+    q.ctx.strokeStyle = q.tool === 'eraser' ? '#fff' : q.color;
+    q.ctx.lineWidth = q.tool === 'eraser' ? 28 : 5;
+    q.ctx.stroke();
+    q.lastPoint = p;
+  };
+
+  canvas.onpointerup = canvas.onpointerleave = canvas.onpointercancel = () => {
+    const q = ctxs.get(canvas);
+    q.down = false;
+    q.lastPoint = null;
+  };
+}
+
 function finishDrawing(){clearInterval(state.timer);state.drawingData=$('drawingCanvas').toDataURL();$('guessArtist').textContent=state.artist;const gc=$('guessCanvas');const img=new Image();img.onload=()=>{gc.width=$('drawingCanvas').width;gc.height=$('drawingCanvas').height;gc.getContext('2d').drawImage(img,0,0,gc.width,gc.height)};img.src=state.drawingData;const opts=shuffle([state.chosen,...shuffle(words.filter(w=>w[0]!==state.chosen[0])).slice(0,3)]);$('guessOptions').innerHTML=opts.map(w=>`<button class="guess-option" data-answer="${w[0]}">${w[1]} ${w[0]}</button>`).join('');document.querySelectorAll('.guess-option').forEach(b=>b.onclick=()=>submitGuess(b.dataset.answer));$('guessMessage').textContent='';show('guessScreen')}
-$('finishDrawing').onclick=finishDrawing;document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>{const q=ctxs.get($('drawingCanvas'));if(!q)return;if(b.dataset.tool){q.tool=b.dataset.tool;document.querySelectorAll('.tool[data-tool]').forEach(x=>x.classList.remove('active'));b.classList.add('active')}if(b.id==='clearButton'){const canvas=$('drawingCanvas');const c=ctxs.get(canvas).c;c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height)}if(b.id==='undoButton'){const src=q.history.pop();if(src){const im=new Image();im.onload=()=>{const canvas=$('drawingCanvas');const c=ctxs.get(canvas).c;c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.drawImage(im,0,0,canvas.width,canvas.height)};im.src=src}}});document.querySelectorAll('.color').forEach(b=>b.onclick=()=>{const q=ctxs.get($('drawingCanvas'));if(!q)return;q.color=b.dataset.color;q.tool='pen';document.querySelectorAll('.color').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.querySelectorAll('.tool[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='pen'))});
+$('finishDrawing').onclick=finishDrawing;document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>{const q=ctxs.get($('drawingCanvas'));if(!q)return;if(b.dataset.tool){q.tool=b.dataset.tool;document.querySelectorAll('.tool[data-tool]').forEach(x=>x.classList.remove('active'));b.classList.add('active')}if(b.id==='clearButton'){const canvas=$('drawingCanvas');const c=ctxs.get(canvas).ctx;c.clearRect(0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));c.fillStyle='#fff';c.fillRect(0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1))}if(b.id==='undoButton'){const src=q.history.pop();if(src){const im=new Image();im.onload=()=>{const canvas=$('drawingCanvas');const c=ctxs.get(canvas).ctx;c.clearRect(0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));c.fillStyle='#fff';c.fillRect(0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));c.drawImage(im,0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));};im.src=src}}});document.querySelectorAll('.color').forEach(b=>b.onclick=()=>{const q=ctxs.get($('drawingCanvas'));if(!q)return;q.color=b.dataset.color;q.tool='pen';document.querySelectorAll('.color').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');document.querySelectorAll('.tool[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='pen'))});
 function submitGuess(answer){if(answer===state.chosen[0]){state.score++;$('resultTitle').textContent='إجابة صحيحة! 🎉';$('resultText').textContent='حصلتم على نقطة، أحسنتم يا أصدقاء!'}else{$('resultTitle').textContent='محاولة رائعة! 🌟';$('resultText').textContent='لا بأس، استمروا في المحاولة في الجولة القادمة.'}$('answer').textContent=state.chosen[0];show('resultScreen')}$('submitCustom').onclick=()=>{const v=$('customGuess').value.trim();if(v)submitGuess(v)};$('nextRound').onclick=()=>{state.round++;makeCards();show('cardsScreen')};$('restart').onclick=()=>{state={...state,round:1,score:0};show('setupScreen')};

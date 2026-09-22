@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#6c5ce7"><title>خَمِّن الرسمة</title><link rel="stylesheet" href="styles.css?v=7"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#6c5ce7"><title>خَمِّن الرسمة</title><link rel="stylesheet" href="styles.css?v=8"></head>
 <body>
 <main class="app-shell">
 <header class="topbar"><div class="brand"><span class="brand-mark">✏️</span><span id="gameTitle">خَمِّن الرسمة</span></div><div id="roundLabel" class="round-label">الجولة 1</div></header>
@@ -9,4 +9,20 @@
 <section id="drawScreen" class="screen"><div class="gamebar"><div id="timer" class="timer">01:00</div><div id="secretCard" class="secret-pill">البطاقة مختارة سرًا 🤫</div><button id="finishDrawing" class="primary">انتهيت ✓</button></div><div class="canvas-wrap"><canvas id="drawingCanvas"></canvas></div><div class="tools"><button class="tool active" data-tool="pen">✏️ قلم</button><button class="tool" data-tool="fill">🪣 تعبئة</button><button class="tool" data-tool="eraser">🧽 ممحاة</button><button id="undoButton" class="tool">↩ تراجع</button><button id="clearButton" class="tool danger">مسح الكل</button><div class="colors"><button class="color selected" data-color="#292d3e" style="--color:#292d3e"></button><button class="color" data-color="#e74c3c" style="--color:#e74c3c"></button><button class="color" data-color="#f1c40f" style="--color:#f1c40f"></button><button class="color" data-color="#2ecc71" style="--color:#2ecc71"></button><button class="color" data-color="#3498db" style="--color:#3498db"></button><button class="color" data-color="#9b59b6" style="--color:#9b59b6"></button><input id="colorWheel" class="color-wheel" type="color" value="#ff7a00"></div></div></section>
 <section id="guessScreen" class="screen"><div class="section-heading centered"><span class="step">٢</span><div><h2><span id="guessTitle">ما الذي رسمته</span> <span id="guessArtist"></span>؟</h2><p id="guessSub">انظروا إلى الرسمة وفكّروا جيدًا!</p></div></div><div class="guess-layout"><div class="canvas-preview"><canvas id="guessCanvas"></canvas></div><div class="guess-panel"><h3 id="guessOptionsTitle">اختاروا التخمين</h3><div id="guessOptions" class="guess-options"></div><div class="custom-guess"><input id="customGuess" placeholder="أو اكتب إجابتك هنا"><button id="submitCustom" class="primary">إرسال</button></div></div></div></section>
 <section id="resultScreen" class="screen"><div class="result-card"><div class="confetti">🎉</div><h2 id="resultTitle"></h2><p id="answerLabel">الإجابة الصحيحة كانت:</p><div id="answer" class="answer"></div><p id="resultText"></p><button id="nextRound" class="primary large">جولة جديدة</button><button id="restart" class="link-button">العودة إلى البداية</button></div></section>
-</main><footer id="footer">صُممت بمحبة للتعلّم والمرح ❤️</footer><script src="app.js?v=7"></script></body></html>
+</main><footer id="footer">صُممت بمحبة للتعلّم والمرح ❤️</footer>
+<script src="app.js?v=8"></script>
+<script>
+(function () {
+  var select = document.getElementById('duration');
+  if (!select) return;
+  select.innerHTML = '';
+  [['60','دقيقة'],['90','دقيقة ونصف'],['120','دقيقتان']].forEach(function (item) {
+    var option = document.createElement('option');
+    option.value = item[0];
+    option.textContent = item[1];
+    select.appendChild(option);
+  });
+  select.value = '60';
+})();
+</script>
+</body></html>
